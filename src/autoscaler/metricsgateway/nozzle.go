@@ -80,6 +80,7 @@ func (n *Nozzle) streamMetrics() {
 }
 
 func (n *Nozzle) filterEnvelopes(envelops []*loggregator_v2.Envelope) {
+	n.logger.Info("origin envelops", lager.Data{"envelopes length": len(envelops)})
 	for _, e := range envelops {
 		_, exist := n.getAppIDsFunc()[e.SourceId]
 		if exist {

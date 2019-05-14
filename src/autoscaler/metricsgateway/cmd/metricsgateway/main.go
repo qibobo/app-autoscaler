@@ -159,7 +159,7 @@ func createNozzles(logger lager.Logger, nozzleCount int, shardID string, rlpAddr
 func createEmitters(logger lager.Logger, bufferSize int, eclock clock.Clock, keepAliveInterval time.Duration, metricsServerAddrs []string, metricServerClientTLSConfig *tls.Config, handshakeTimeout time.Duration, maxSetupRetryCount int, maxCloseRetryCount int, retryDelay time.Duration) []metricsgateway.Emitter {
 	emitters := make([]metricsgateway.Emitter, len(metricsServerAddrs))
 	for i := 0; i < len(metricsServerAddrs); i++ {
-		emitter := metricsgateway.NewEnvelopeEmitter(logger, bufferSize, eclock, keepAliveInterval, mg_helpers.NewWSHelper(metricsServerAddrs[i]+routes.EnvelopePath, metricServerClientTLSConfig, handshakeTimeout, logger, maxSetupRetryCount, maxCloseRetryCount, retryDelay))
+		emitter := metricsgateway.NewFakeEmitter(logger, bufferSize, eclock, keepAliveInterval, mg_helpers.NewWSHelper(metricsServerAddrs[i]+routes.EnvelopePath, metricServerClientTLSConfig, handshakeTimeout, logger, maxSetupRetryCount, maxCloseRetryCount, retryDelay))
 		emitters[i] = emitter
 	}
 	return emitters

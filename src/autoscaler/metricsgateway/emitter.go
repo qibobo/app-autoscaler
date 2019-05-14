@@ -16,6 +16,77 @@ type Emitter interface {
 	Start() error
 	Stop()
 }
+type FakeEmitter struct {
+	logger            lager.Logger
+	envelopChan       chan *loggregator_v2.Envelope
+	bufferSize        int
+	doneChan          chan bool
+	keepAliveInterval time.Duration
+	eclock            clock.Clock
+	ticker            clock.Ticker
+	wsHelper          helpers.WSHelper
+}
+
+func NewFakeEmitter(logger lager.Logger, bufferSize int, eclock clock.Clock, keepAliveInterval time.Duration, wsHelper helpers.WSHelper) Emitter {
+	return &FakeEmitter{
+		logger:            logger.Session("FakeEmitter"),
+		envelopChan:       make(chan *loggregator_v2.Envelope, bufferSize),
+		doneChan:          make(chan bool),
+		eclock:            eclock,
+		keepAliveInterval: keepAliveInterval,
+		wsHelper:          wsHelper,
+	}
+}
+func (e *FakeEmitter) Start() error {
+	// err := e.wsHelper.SetupConn()
+	// if err != nil {
+	// 	e.logger.Error("failed-to-start-emimtter", err)
+	// 	return err
+	// }
+	go e.startEmitEnvelope()
+	e.logger.Info("started")
+	return nil
+}
+
+func (e *FakeEmitter) startEmitEnvelope() {
+	e.ticker = e.eclock.NewTicker(e.keepAliveInterval)
+	for {
+		select {
+		case <-e.doneChan:
+			e.logger.Info("stopped")
+			return
+		case envelope := <-e.envelopChan:
+			err := e.Emit(envelope)
+			if err != nil {
+				e.logger.Error("failed-to-emit-envelope", err, lager.Data{"message": envelope})
+			}
+		case <-e.ticker.C():
+			// err := e.wsHelper.Ping()
+			// if err != nil {
+			// 	e.logger.Error("failed-to-ping-metricserver", err)
+
+			// }
+		}
+	}
+}
+
+func (e *FakeEmitter) Stop() {
+	// e.wsHelper.CloseConn()
+	e.doneChan <- true
+
+}
+
+func (e *FakeEmitter) Accept(envelope *loggregator_v2.Envelope) {
+	e.logger.Debug("accept-envelope", lager.Data{"envelope": envelope})
+	e.envelopChan <- envelope
+}
+func (e *FakeEmitter) Emit(envelope *loggregator_v2.Envelope) error {
+	e.logger.Debug("emit-envelope", lager.Data{"envelope": envelope})
+	// err := e.wsHelper.Write(envelope)
+	return nil
+}
+
+//
 
 type EnvelopeEmitter struct {
 	logger            lager.Logger
