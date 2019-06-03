@@ -11,16 +11,16 @@ import (
 	"github.com/onsi/gomega/ghttp"
 )
 
-type AppAggregatedMetricResult struct {
-	TotalResults int                `json:"total_results"`
-	TotalPages   int                `json:"total_pages"`
-	Page         int                `json:"page"`
-	PrevUrl      string             `json:"prev_url"`
-	NextUrl      string             `json:"next_url"`
-	Resources    []models.AppMetric `json:"resources"`
-}
+// type AppAggregatedMetricResult struct {
+// 	TotalResults int                `json:"total_results"`
+// 	TotalPages   int                `json:"total_pages"`
+// 	Page         int                `json:"page"`
+// 	PrevUrl      string             `json:"prev_url"`
+// 	NextUrl      string             `json:"next_url"`
+// 	Resources    []models.AppMetric `json:"resources"`
+// }
 
-var _ = Describe("Integration_Api_EventGenerator", func() {
+var _ = Describe("Integration_GolangApi_EventGenerator", func() {
 	var (
 		appId             string
 		pathVariables     []string
@@ -37,15 +37,18 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 
 		eventGeneratorConfPath = components.PrepareEventGeneratorConfig(dbUrl, components.Ports[EventGenerator], fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), aggregatorExecuteInterval, policyPollerInterval, saveInterval, evaluationManagerInterval, defaultHttpClientTimeout, tmpDir)
 		startEventGenerator()
-		apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, fakeCCNOAAUAA.URL(), dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), true, defaultHttpClientTimeout, tmpDir)
-		startApiServer()
+		golangApiServerConfPath = components.PrepareGolangApiServerConfig(dbUrl, components.Ports[GolangAPIServer], components.Ports[GolangServiceBroker],
+			fakeCCNOAAUAA.URL(), false, 200, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]),
+			fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]),
+			true, defaultHttpClientTimeout, tmpDir)
+		startGolangApiServer()
 		appId = getRandomId()
 		pathVariables = []string{appId, metricType}
 
 	})
 
 	AfterEach(func() {
-		stopApiServer()
+		stopGolangApiServer()
 		stopEventGenerator()
 	})
 	Describe("Get App Metrics", func() {
@@ -57,7 +60,10 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 			})
 			It("should error with status code 500", func() {
 				By("check public api")
-				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[APIPublicServer], pathVariables, parameters, http.StatusInternalServerError, map[string]interface{}{})
+				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[GolangAPIServer], pathVariables, parameters, http.StatusInternalServerError, map[string]interface{}{
+					"code":    "Interal-Server-Error",
+					"message": "Failed to check if user is admin",
+				})
 			})
 		})
 
@@ -73,7 +79,10 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 			})
 			It("should error with status code 500", func() {
 				By("check public api")
-				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[APIPublicServer], pathVariables, parameters, http.StatusInternalServerError, map[string]interface{}{})
+				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[GolangAPIServer], pathVariables, parameters, http.StatusInternalServerError, map[string]interface{}{
+					"code":    "Interal-Server-Error",
+					"message": "Failed to check if user is admin",
+				})
 			})
 		})
 		Context("UAA api returns 401", func() {
@@ -95,7 +104,7 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 			})
 			It("should error with status code 401", func() {
 				By("check public api")
-				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[APIPublicServer], pathVariables, parameters, http.StatusUnauthorized, map[string]interface{}{})
+				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[GolangAPIServer], pathVariables, parameters, http.StatusUnauthorized, map[string]interface{}{})
 			})
 		})
 
@@ -110,7 +119,7 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 			})
 			It("should error with status code 401", func() {
 				By("check public api")
-				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[APIPublicServer], pathVariables, parameters, http.StatusUnauthorized, map[string]interface{}{})
+				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[GolangAPIServer], pathVariables, parameters, http.StatusUnauthorized, map[string]interface{}{})
 			})
 		})
 
@@ -121,7 +130,10 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 
 			It("should error with status code 500", func() {
 				By("check public api")
-				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[APIPublicServer], pathVariables, parameters, http.StatusInternalServerError, map[string]interface{}{"error": fmt.Sprintf("connect ECONNREFUSED 127.0.0.1:%d", components.Ports[EventGenerator])})
+				checkPublicAPIResponseContentWithParameters(getAppAggregatedMetrics, components.Ports[GolangAPIServer], pathVariables, parameters, http.StatusInternalServerError, map[string]interface{}{
+					"code":    "Interal-Server-Error",
+					"message": "Error retrieving metrics history from eventgenerator",
+				})
 			})
 		})
 
@@ -187,7 +199,7 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 					},
 				}
 				By("check public api")
-				checkAggregatedMetricResult(components.Ports[APIPublicServer], pathVariables, parameters, result)
+				checkAggregatedMetricResult(components.Ports[GolangAPIServer], pathVariables, parameters, result)
 
 				By("get the 2nd page")
 				parameters = map[string]string{"start-time": "111111", "end-time": "999999", "order-direction": "asc", "page": "2", "results-per-page": "2"}
@@ -215,7 +227,7 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 					},
 				}
 				By("check public api")
-				checkAggregatedMetricResult(components.Ports[APIPublicServer], pathVariables, parameters, result)
+				checkAggregatedMetricResult(components.Ports[GolangAPIServer], pathVariables, parameters, result)
 
 				By("get the 3rd page")
 				parameters = map[string]string{"start-time": "111111", "end-time": "999999", "order-direction": "asc", "page": "3", "results-per-page": "2"}
@@ -235,7 +247,7 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 					},
 				}
 				By("check public api")
-				checkAggregatedMetricResult(components.Ports[APIPublicServer], pathVariables, parameters, result)
+				checkAggregatedMetricResult(components.Ports[GolangAPIServer], pathVariables, parameters, result)
 
 				By("the 4th page should be empty")
 				parameters = map[string]string{"start-time": "111111", "end-time": "999999", "order-direction": "asc", "page": "4", "results-per-page": "2"}
@@ -247,7 +259,7 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 					Resources:    []models.AppMetric{},
 				}
 				By("check public api")
-				checkAggregatedMetricResult(components.Ports[APIPublicServer], pathVariables, parameters, result)
+				checkAggregatedMetricResult(components.Ports[GolangAPIServer], pathVariables, parameters, result)
 			})
 
 		})
