@@ -60,8 +60,9 @@ var (
 	metricsCollectorResponse []models.AppInstanceMetric
 	eventGeneratorResponse   []models.AppMetric
 
-	fakeCFClient *fakes.FakeCFClient
-	fakePolicyDB *fakes.FakePolicyDB
+	fakeCFClient  *fakes.FakeCFClient
+	fakePolicyDB  *fakes.FakePolicyDB
+	fakeBindingDB *fakes.FakeBindingDB
 )
 
 func TestPublicapiserver(t *testing.T) {
@@ -122,9 +123,13 @@ var _ = BeforeSuite(func() {
 	}
 
 	fakePolicyDB = &fakes.FakePolicyDB{}
+	fakeBindingDB = &fakes.FakeBindingDB{}
+	fakeBindingDB.CheckServiceBindingStub = func(appId string) bool {
+		return true
+	}
 	fakeCFClient = &fakes.FakeCFClient{}
 
-	httpServer, err := publicapiserver.NewPublicApiServer(lagertest.NewTestLogger("publicapiserver"), conf, fakePolicyDB, fakeCFClient)
+	httpServer, err := publicapiserver.NewPublicApiServer(lagertest.NewTestLogger("publicapiserver"), conf, fakePolicyDB, fakeBindingDB, fakeCFClient)
 	Expect(err).NotTo(HaveOccurred())
 
 	serverUrl, err = url.Parse("http://127.0.0.1:" + strconv.Itoa(apiPort))

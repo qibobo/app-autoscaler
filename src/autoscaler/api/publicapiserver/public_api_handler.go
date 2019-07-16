@@ -1,16 +1,19 @@
 package publicapiserver
 
 import (
+	"database/sql"
+	"io/ioutil"
+	"net/http"
+	"os"
+
 	"autoscaler/api/config"
+	"autoscaler/api/custom_metrics_cred_helper"
 	"autoscaler/api/policyvalidator"
 	"autoscaler/api/schedulerutil"
 	"autoscaler/db"
 	"autoscaler/helpers"
 	"autoscaler/models"
 	"autoscaler/routes"
-	"io/ioutil"
-	"net/http"
-	"os"
 
 	"code.cloudfoundry.org/cfhttp/handlers"
 	"code.cloudfoundry.org/lager"
@@ -143,7 +146,6 @@ func (h *PublicApiHandler) AttachScalingPolicy(w http.ResponseWriter, r *http.Re
 			Message: "Error creating/updating schedules"})
 		return
 	}
-
 	handlers.WriteJSONResponse(w, http.StatusOK, nil)
 }
 
@@ -166,7 +168,6 @@ func (h *PublicApiHandler) DetachScalingPolicy(w http.ResponseWriter, r *http.Re
 			Message: "Error deleting policy"})
 		return
 	}
-
 	h.logger.Info("Deleting schedules", lager.Data{"appId": appId})
 	err = h.schedulerUtil.DeleteSchedule(appId)
 	if err != nil {
@@ -175,7 +176,6 @@ func (h *PublicApiHandler) DetachScalingPolicy(w http.ResponseWriter, r *http.Re
 			Message: "Error deleting schedules"})
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("{}"))
 }
@@ -385,4 +385,89 @@ func (h *PublicApiHandler) GetApiInfo(w http.ResponseWriter, r *http.Request, va
 
 func (h *PublicApiHandler) GetHealth(w http.ResponseWriter, r *http.Request, vars map[string]string) {
 	w.Write([]byte(`{"alive":"true"}`))
+}
+
+func (h *PublicApiHandler) GetCustomMetricsCredential(w http.ResponseWriter, r *http.Request, vars map[string]string) {
+	appId := vars["appId"]
+	if appId == "" {
+		h.logger.Error("AppId is missing", nil, nil)
+		handlers.WriteJSONResponse(w, http.StatusBadRequest, models.ErrorResponse{
+			Code:    "Bad Request",
+			Message: "AppId is required",
+		})
+		return
+	}
+
+	h.logger.Info("Get custom metric credential", lager.Data{"appId": appId})
+	cred, err := custom_metrics_cred_helper.GetCustomMetricsCredential(appId, h.policydb, custom_metrics_cred_helper.MaxRetry)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			h.logger.Error("Custom metric credential does not exist", err, lager.Data{"appId": appId})
+			handlers.WriteJSONResponse(w, http.StatusNotFound, models.ErrorResponse{
+				Code:    "Not-Found",
+				Message: "Custom metric credential does not exist"})
+			return
+		}
+		h.logger.Error("Failed to retrieve custom metric credential", err, lager.Data{"appId": appId})
+		handlers.WriteJSONResponse(w, http.StatusInternalServerError, models.ErrorResponse{
+			Code:    "Interal-Server-Error",
+			Message: "Error retrieving custom metric credential"})
+		return
+	}
+	handlers.WriteJSONResponse(w, http.StatusOK, struct {
+		AppId string `json:"app_id"`
+		*models.CustomMetricCredentials
+	}{
+		AppId:                   appId,
+		CustomMetricCredentials: cred,
+	})
+
+}
+
+func (h *PublicApiHandler) CreateCustomMetricsCredential(w http.ResponseWriter, r *http.Request, vars map[string]string) {
+	appId := vars["appId"]
+	if appId == "" {
+		h.logger.Error("AppId is missing", nil, nil)
+		handlers.WriteJSONResponse(w, http.StatusBadRequest, models.ErrorResponse{
+			Code:    "Bad Request",
+			Message: "AppId is required",
+		})
+		return
+	}
+
+	h.logger.Info("Create custom metric credential", lager.Data{"appId": appId})
+	cred, err := custom_metrics_cred_helper.CreateCustomMetricsCredential(appId, h.policydb, custom_metrics_cred_helper.MaxRetry)
+	if err != nil {
+		h.logger.Error("Failed to create custom metric credential", err, lager.Data{"appId": appId})
+		handlers.WriteJSONResponse(w, http.StatusInternalServerError, models.ErrorResponse{
+			Code:    "Interal-Server-Error",
+			Message: "Error creating custom metric credential"})
+		return
+	}
+	handlers.WriteJSONResponse(w, http.StatusOK, cred)
+
+}
+
+func (h *PublicApiHandler) DeleteCustomMetricsCredential(w http.ResponseWriter, r *http.Request, vars map[string]string) {
+	appId := vars["appId"]
+	if appId == "" {
+		h.logger.Error("AppId is missing", nil, nil)
+		handlers.WriteJSONResponse(w, http.StatusBadRequest, models.ErrorResponse{
+			Code:    "Bad Request",
+			Message: "AppId is required",
+		})
+		return
+	}
+
+	h.logger.Info("Delete custom metric credential", lager.Data{"appId": appId})
+	err := custom_metrics_cred_helper.DeleteCustomMetricsCredential(appId, h.policydb, custom_metrics_cred_helper.MaxRetry)
+	if err != nil {
+		h.logger.Error("Failed to delete custom metric credential", err, lager.Data{"appId": appId})
+		handlers.WriteJSONResponse(w, http.StatusInternalServerError, models.ErrorResponse{
+			Code:    "Interal-Server-Error",
+			Message: "Error deleting custom metric credential"})
+		return
+	}
+	handlers.WriteJSONResponse(w, http.StatusOK, nil)
+
 }
