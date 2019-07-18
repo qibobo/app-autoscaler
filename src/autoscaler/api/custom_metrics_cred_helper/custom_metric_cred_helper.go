@@ -1,6 +1,8 @@
 package custom_metrics_cred_helper
 
 import (
+	"database/sql"
+
 	"autoscaler/db"
 	"autoscaler/models"
 
@@ -35,16 +37,24 @@ func CreateCustomMetricsCredential(appId string, policyDB db.PolicyDB, maxRetry 
 	var err error
 	var count int
 	var cred *models.CustomMetricCredentials
-	for {
-		if count == maxRetry {
-			return nil, err
+	cred, err = GetCustomMetricsCredential(appId, policyDB, maxRetry)
+	if err == sql.ErrNoRows {
+		for {
+			if count == maxRetry {
+				return nil, err
+			}
+			cred, err = _createCustomMetricsCredential(appId, policyDB)
+			if err == nil {
+				return cred, nil
+			}
+			count++
 		}
-		cred, err = _createCustomMetricsCredential(appId, policyDB)
-		if err == nil {
-			return cred, nil
-		}
-		count++
 	}
+	if err != nil {
+		return nil, err
+	}
+	return cred, err
+
 }
 
 func _deleteCustomMetricsCredential(appId string, policyDB db.PolicyDB) error {
@@ -89,6 +99,9 @@ func GetCustomMetricsCredential(appId string, policyDB db.PolicyDB, maxRetry int
 		cred, err = _getCustomMetricsCredential(appId, policyDB)
 		if err == nil {
 			return cred, nil
+		}
+		if err == sql.ErrNoRows {
+			return nil, err
 		}
 		count++
 	}

@@ -6,6 +6,7 @@ import (
 	"autoscaler/fakes"
 	"autoscaler/models"
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -342,6 +343,7 @@ var _ = Describe("BrokerHandler", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				req, err = http.NewRequest(http.MethodPut, "", bytes.NewReader(body))
+				policydb.GetCustomMetricsCredsReturns(nil, sql.ErrNoRows)
 				policydb.SaveCustomMetricsCredReturns(fmt.Errorf("some sql error"))
 			})
 			It("fails with 500", func() {

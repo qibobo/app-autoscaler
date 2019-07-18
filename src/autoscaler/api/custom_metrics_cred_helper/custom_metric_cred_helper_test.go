@@ -1,6 +1,7 @@
 package custom_metrics_cred_helper_test
 
 import (
+	"database/sql"
 	"errors"
 
 	. "autoscaler/api/custom_metrics_cred_helper"
@@ -33,15 +34,35 @@ var _ = Describe("CustomMetricCredHelper", func() {
 			BeforeEach(func() {
 				policyDB.SaveCustomMetricsCredReturns(nil)
 			})
-			It("should try only once and succeed", func() {
-				Expect(policyDB.SaveCustomMetricsCredCallCount()).To(Equal(1))
-				Expect(credResult).NotTo(BeNil())
-				Expect(err).NotTo(HaveOccurred())
+			Context("when credential does not exist", func() {
+				BeforeEach(func() {
+					policyDB.GetCustomMetricsCredsReturns(nil, sql.ErrNoRows)
+				})
+				It("should try saving only once and succeed", func() {
+					Expect(policyDB.GetCustomMetricsCredsCallCount()).To(Equal(1))
+					Expect(policyDB.SaveCustomMetricsCredCallCount()).To(Equal(1))
+					Expect(credResult).NotTo(BeNil())
+					Expect(err).NotTo(HaveOccurred())
+				})
 			})
+			Context("when credential already exists", func() {
+				BeforeEach(func() {
+					policyDB.GetCustomMetricsCredsReturns(credential, nil)
+				})
+				It("should return the credential without try saving", func() {
+					Expect(policyDB.GetCustomMetricsCredsCallCount()).To(Equal(1))
+					Expect(policyDB.SaveCustomMetricsCredCallCount()).To(Equal(0))
+					Expect(credResult).To(Equal(credential))
+					Expect(err).NotTo(HaveOccurred())
+				})
+			})
+
 		})
 		Context("when there is continous error when calling policydb", func() {
 			BeforeEach(func() {
+				policyDB.GetCustomMetricsCredsReturns(nil, sql.ErrNoRows)
 				policyDB.SaveCustomMetricsCredReturns(errors.New("dberror"))
+
 			})
 			It("should try MaxRetry times and return error", func() {
 				Expect(policyDB.SaveCustomMetricsCredCallCount()).To(Equal(MaxRetry))

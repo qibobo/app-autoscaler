@@ -1684,6 +1684,7 @@ var _ = Describe("PublicApiHandler", func() {
 		Context("When failed to save custom metric credential to policydb", func() {
 			BeforeEach(func() {
 				policydb.SaveCustomMetricsCredReturns(fmt.Errorf("sql db error"))
+				policydb.GetCustomMetricsCredsReturns(nil, sql.ErrNoRows)
 			})
 			It("should fails with 500", func() {
 				Expect(resp.Code).To(Equal(http.StatusInternalServerError))
