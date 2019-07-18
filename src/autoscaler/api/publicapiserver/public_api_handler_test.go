@@ -1660,7 +1660,7 @@ var _ = Describe("PublicApiHandler", func() {
 			})
 			It("should succeed with 200", func() {
 				Expect(resp.Code).To(Equal(http.StatusOK))
-				Expect(resp.Body.String()).To(Equal(`{"app_id":"test-app-id","username":"username","password":"password"}`))
+				Expect(resp.Body.String()).To(Equal(`{"app_id":"test-app-id","username":"username","password":"password","url":"http://localhost:8088"}`))
 			})
 		})
 	})

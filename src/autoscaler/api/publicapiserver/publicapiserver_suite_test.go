@@ -114,6 +114,9 @@ var _ = BeforeSuite(func() {
 				CACertFile: filepath.Join(testCertDir, "autoscaler-ca.crt"),
 			},
 		},
+		MetricsForwarder: config.MetricsForwarderConfig{
+			MetricsForwarderUrl: "http://localhost:8088",
+		},
 		CF: cf.CFConfig{
 			API:               "http://api.bosh-lite.com",
 			ClientID:          CLIENT_ID,

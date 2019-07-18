@@ -417,9 +417,11 @@ func (h *PublicApiHandler) GetCustomMetricsCredential(w http.ResponseWriter, r *
 	handlers.WriteJSONResponse(w, http.StatusOK, struct {
 		AppId string `json:"app_id"`
 		*models.CustomMetricCredentials
+		Url string `json:"url"`
 	}{
 		AppId:                   appId,
 		CustomMetricCredentials: cred,
+		Url:                     h.conf.MetricsForwarder.MetricsForwarderUrl,
 	})
 
 }
@@ -444,7 +446,15 @@ func (h *PublicApiHandler) CreateCustomMetricsCredential(w http.ResponseWriter, 
 			Message: "Error creating custom metric credential"})
 		return
 	}
-	handlers.WriteJSONResponse(w, http.StatusOK, cred)
+	handlers.WriteJSONResponse(w, http.StatusOK, struct {
+		AppId string `json:"app_id"`
+		*models.CustomMetricCredentials
+		Url string `json:"url"`
+	}{
+		AppId:                   appId,
+		CustomMetricCredentials: cred,
+		Url:                     h.conf.MetricsForwarder.MetricsForwarderUrl,
+	})
 
 }
 
