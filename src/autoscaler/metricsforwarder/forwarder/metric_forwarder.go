@@ -8,6 +8,17 @@ import (
 	"code.cloudfoundry.org/lager"
 )
 
+type EnvelopeStreamerLogger struct {
+	logger lager.Logger
+}
+
+func (l *EnvelopeStreamerLogger) Printf(message string, data ...interface{}) {
+	l.logger.Debug(message, lager.Data{"data": data})
+}
+func (l *EnvelopeStreamerLogger) Panicf(message string, data ...interface{}) {
+	l.logger.Fatal(message, nil, lager.Data{"data": data})
+}
+
 type MetricForwarder interface {
 	EmitMetric(*models.CustomMetric)
 }
@@ -34,6 +45,9 @@ func NewMetricForwarder(logger lager.Logger, conf *config.Config) (MetricForward
 		tlsConfig,
 		loggregator.WithAddr(conf.LoggregatorConfig.MetronAddress),
 		loggregator.WithTag("origin", METRICS_FORWARDER_ORIGIN),
+		loggregator.WithLogger(&EnvelopeStreamerLogger{
+			logger: logger.Session("emitter"),
+		}),
 	)
 
 	if err != nil {
