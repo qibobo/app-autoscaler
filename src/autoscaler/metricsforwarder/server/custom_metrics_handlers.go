@@ -50,13 +50,13 @@ func (mh *CustomMetricsHandler) PublishMetrics(w http.ResponseWriter, r *http.Re
 	}
 
 	var isValid bool
-	var credentials models.CustomMetricCredentials
+	var credentials *models.CustomMetricCredentials
 
 	appID := vars["appid"]
 	res, found := mh.credentialCache.Get(appID)
 	if found {
 		// Credentials found in cache
-		credentials = res.(models.CustomMetricCredentials)
+		credentials = res.(*models.CustomMetricCredentials)
 		isValid = mh.validateCredentials(username, credentials.Username, password, credentials.Password)
 	}
 
