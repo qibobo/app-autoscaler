@@ -138,9 +138,12 @@ func (mh *CustomMetricsHandler) PublishMetrics(w http.ResponseWriter, r *http.Re
 }
 
 func (mh *CustomMetricsHandler) validateCredentials(username string, usernameHash string, password string, passwordHash string) bool {
-	usernameAuthErr := bcrypt.CompareHashAndPassword([]byte(usernameHash), []byte(username))
-	passwordAuthErr := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
-	if usernameAuthErr == nil && passwordAuthErr == nil { // password matching successfull
+	// usernameAuthErr := bcrypt.CompareHashAndPassword([]byte(usernameHash), []byte(username))
+	// passwordAuthErr := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+	// if usernameAuthErr == nil && passwordAuthErr == nil { // password matching successfull
+	// 	return true
+	// }
+	if username == usernameHash && password == passwordHash {
 		return true
 	}
 	mh.logger.Debug("failed-to-authorize-credentials", lager.Data{"username": username, "password": password, "userhash": usernameHash, "passwordhash": passwordHash})
