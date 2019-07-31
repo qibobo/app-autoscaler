@@ -68,7 +68,7 @@ func (mh *CustomMetricsHandler) PublishMetrics(w http.ResponseWriter, r *http.Re
 		credentials, err := mh.policyDB.GetCustomMetricsCreds(appID)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				mh.logger.Error("error-validating-authorizaion-header", err)
+				mh.logger.Error("no-credential-found-in-db", err, lager.Data{"appID": appID})
 				handlers.WriteJSONResponse(w, http.StatusUnauthorized, models.ErrorResponse{
 					Code:    "Authorization-Failure-Error",
 					Message: "Incorrect credentials. Basic authorization credential does not match"})
@@ -143,7 +143,7 @@ func (mh *CustomMetricsHandler) validateCredentials(username string, usernameHas
 	if usernameAuthErr == nil && passwordAuthErr == nil { // password matching successfull
 		return true
 	}
-	mh.logger.Debug("failed-to-authorize-credentials")
+	mh.logger.Debug("failed-to-authorize-credentials", lager.Data{"username": username, "password": password, "userhash": usernameHash, "passwordhash": passwordHash})
 	return false
 }
 
