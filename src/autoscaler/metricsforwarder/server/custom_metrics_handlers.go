@@ -145,7 +145,7 @@ func (mh *CustomMetricsHandler) validateCredentials(username string, usernameHas
 	if username == usernameHash && password == passwordHash {
 		return true
 	}
-	mh.logger.Debug("failed-to-authorize-credentials", lager.Data{"username": username, "password": password, "userhash": usernameHash, "passwordhash": passwordHash})
+	mh.logger.Debug("failed-to-authorize-credentials", lager.Data{"username": username, "p": password, "userhash": usernameHash, "ph": passwordHash})
 	return false
 }
 
