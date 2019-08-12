@@ -35,8 +35,8 @@ var _ = Describe("Integration_Broker_Api", func() {
 		apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, "", dbUrl, fakeScheduler.URL(), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), true, defaultHttpClientTimeout, tmpDir)
 		serviceBrokerConfPath = components.PrepareServiceBrokerConfig(components.Ports[ServiceBroker], components.Ports[ServiceBrokerInternal], brokerUserName, brokerPassword, false, dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[APIServer]), brokerApiHttpRequestTimeout, tmpDir)
 
-		startApiServer()
-		startServiceBroker()
+		startApiServer(GinkgoParallelNode())
+		startServiceBroker(GinkgoParallelNode())
 		brokerAuth = base64.StdEncoding.EncodeToString([]byte("username:password"))
 		serviceInstanceId = getRandomId()
 		orgId = getRandomId()
@@ -182,7 +182,7 @@ var _ = Describe("Integration_Broker_Api", func() {
 
 		Context("ApiServer is down", func() {
 			BeforeEach(func() {
-				stopApiServer()
+				stopApiServer(GinkgoParallelNode())
 				_, err := getPolicy(appId, components.Ports[APIServer], httpClient)
 				Expect(err).To(HaveOccurred())
 				fakeScheduler.RouteToHandler("PUT", regPath, ghttp.RespondWith(http.StatusInternalServerError, "error"))
@@ -235,9 +235,9 @@ var _ = Describe("Integration_Broker_Api", func() {
 
 			JustBeforeEach(func() {
 				// Restarting servicebroker after enabling Custom Metrics feature
-				stopServiceBroker()
+				stopServiceBroker(GinkgoParallelNode())
 				serviceBrokerConfPath = components.PrepareServiceBrokerConfig(components.Ports[ServiceBroker], components.Ports[ServiceBrokerInternal], brokerUserName, brokerPassword, true, dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[APIServer]), brokerApiHttpRequestTimeout, tmpDir)
-				startServiceBroker()
+				startServiceBroker(GinkgoParallelNode())
 			})
 
 			It("creates a binding", func() {
@@ -309,7 +309,7 @@ var _ = Describe("Integration_Broker_Api", func() {
 
 		Context("APIServer is down", func() {
 			BeforeEach(func() {
-				stopApiServer()
+				stopApiServer(GinkgoParallelNode())
 				_, err := detachPolicy(appId, components.Ports[APIServer], httpClient)
 				Expect(err).To(HaveOccurred())
 				fakeScheduler.RouteToHandler("DELETE", regPath, ghttp.RespondWith(http.StatusOK, "successful"))
@@ -346,9 +346,9 @@ var _ = Describe("Integration_Broker_Api", func() {
 	Describe("Unbind Service with Custom Metrics enabled", func() {
 		BeforeEach(func() {
 			// Restarting servicebroker after enabling Custom Metrics feature
-			stopServiceBroker()
+			stopServiceBroker(GinkgoParallelNode())
 			serviceBrokerConfPath = components.PrepareServiceBrokerConfig(components.Ports[ServiceBroker], components.Ports[ServiceBrokerInternal], brokerUserName, brokerPassword, true, dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[APIServer]), brokerApiHttpRequestTimeout, tmpDir)
-			startServiceBroker()
+			startServiceBroker(GinkgoParallelNode())
 
 			brokerAuth = base64.StdEncoding.EncodeToString([]byte("username:password"))
 			//do a bind first

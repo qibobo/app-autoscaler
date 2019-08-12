@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	"code.cloudfoundry.org/cfhttp"
 
@@ -33,7 +34,7 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 	)
 
 	AfterEach(func() {
-		stopAll()
+		stopAllWithIndex(GinkgoParallelNode())
 	})
 
 	Describe("Shutdown", func() {
@@ -42,7 +43,7 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 				initializeHttpClient("api.crt", "api.key", "autoscaler-ca.crt", apiSchedulerHttpRequestTimeout)
 				fakeScheduler = ghttp.NewServer()
 				apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, "", dbUrl, fakeScheduler.URL(), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), true, defaultHttpClientTimeout, tmpDir)
-				runner = startApiServer()
+				runner = startApiServer(GinkgoParallelNode())
 				buffer = runner.Buffer()
 			})
 
@@ -60,13 +61,13 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 					Expect(resp.StatusCode).To(Equal(http.StatusCreated))
 					resp.Body.Close()
 
-					sendSigusr2Signal(APIServer)
+					sendSigusr2Signal(APIServer, GinkgoParallelNode())
 					Eventually(buffer, 5*time.Second).Should(gbytes.Say(`Received SIGUSR2 signal`))
 
 					resp, err = attachPolicy(getRandomId(), policyStr, components.Ports[APIServer], httpClient)
 					Expect(err).To(HaveOccurred())
 
-					Eventually(processMap[APIServer].Wait()).Should(Receive())
+					Eventually(processMap[APIServer+"_"+strconv.Itoa(GinkgoParallelNode())].Wait()).Should(Receive())
 					Expect(runner.ExitCode()).Should(Equal(0))
 				})
 
@@ -92,14 +93,14 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 					}()
 
 					Eventually(ch, 5*time.Second).Should(Receive())
-					sendSigusr2Signal(APIServer)
+					sendSigusr2Signal(APIServer, GinkgoParallelNode())
 
 					Eventually(buffer, 5*time.Second).Should(gbytes.Say(`Received SIGUSR2 signal`))
-					Consistently(processMap[APIServer].Wait()).ShouldNot(Receive())
+					Consistently(processMap[APIServer+"_"+strconv.Itoa(GinkgoParallelNode())].Wait()).ShouldNot(Receive())
 					close(ch)
 					Eventually(done).Should(BeClosed())
 
-					Eventually(processMap[APIServer].Wait()).Should(Receive())
+					Eventually(processMap[APIServer+"_"+strconv.Itoa(GinkgoParallelNode())].Wait()).Should(Receive())
 					Expect(runner.ExitCode()).Should(BeZero())
 				})
 			})
@@ -126,8 +127,8 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 
 					Eventually(ch, 5*time.Second).Should(Receive())
 
-					sendKillSignal(APIServer)
-					Eventually(processMap[APIServer].Wait(), 5*time.Second).Should(Receive())
+					sendKillSignal(APIServer, GinkgoParallelNode())
+					Eventually(processMap[APIServer+"_"+strconv.Itoa(GinkgoParallelNode())].Wait(), 5*time.Second).Should(Receive())
 
 					close(ch)
 					Eventually(done).Should(BeClosed())
@@ -148,7 +149,7 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 				httpClient.Timeout = brokerApiHttpRequestTimeout
 				httpClient.Transport.(*http.Transport).TLSClientConfig = brokerTLSConfig
 				serviceBrokerConfPath = components.PrepareServiceBrokerConfig(components.Ports[ServiceBroker], components.Ports[ServiceBrokerInternal], brokerUserName, brokerPassword, false, dbUrl, fakeApiServer.URL(), brokerApiHttpRequestTimeout, tmpDir)
-				runner = startServiceBroker()
+				runner = startServiceBroker(GinkgoParallelNode())
 				buffer = runner.Buffer()
 
 				brokerAuth = base64.StdEncoding.EncodeToString([]byte("username:password"))
@@ -179,13 +180,13 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 					Expect(resp.StatusCode).To(Equal(http.StatusCreated))
 					resp.Body.Close()
 
-					sendSigusr2Signal(ServiceBroker)
+					sendSigusr2Signal(ServiceBroker, GinkgoParallelNode())
 					Eventually(buffer, 5*time.Second).Should(gbytes.Say(`Received SIGUSR2 signal`))
 
 					_, err = bindService(getRandomId(), appId, serviceInstanceId, schedulePolicyJson, components.Ports[ServiceBroker], httpClient)
 					Expect(err).To(HaveOccurred())
 
-					Eventually(processMap[ServiceBroker].Wait(), 10*time.Second).Should(Receive())
+					Eventually(processMap[ServiceBroker+"_"+strconv.Itoa(GinkgoParallelNode())].Wait(), 10*time.Second).Should(Receive())
 					Expect(runner.ExitCode()).Should(BeZero())
 				})
 
@@ -210,14 +211,14 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 					}()
 
 					Eventually(ch, 5*time.Second).Should(Receive())
-					sendSigusr2Signal(ServiceBroker)
+					sendSigusr2Signal(ServiceBroker, GinkgoParallelNode())
 
 					Eventually(buffer, 5*time.Second).Should(gbytes.Say(`Received SIGUSR2 signal`))
-					Consistently(processMap[ServiceBroker].Wait()).ShouldNot(Receive())
+					Consistently(processMap[ServiceBroker+"_"+strconv.Itoa(GinkgoParallelNode())].Wait()).ShouldNot(Receive())
 					close(ch)
 					Eventually(done).Should(BeClosed())
 
-					Eventually(processMap[ServiceBroker].Wait(), 10*time.Second).Should(Receive())
+					Eventually(processMap[ServiceBroker+"_"+strconv.Itoa(GinkgoParallelNode())].Wait(), 10*time.Second).Should(Receive())
 					Expect(runner.ExitCode()).Should(BeZero())
 				})
 			})
@@ -243,8 +244,8 @@ var _ = Describe("Integration_Api_Broker_Graceful_Shutdown", func() {
 
 					Eventually(ch, 5*time.Second).Should(Receive())
 
-					sendKillSignal(ServiceBroker)
-					Eventually(processMap[ServiceBroker].Wait(), 5*time.Second).Should(Receive())
+					sendKillSignal(ServiceBroker, GinkgoParallelNode())
+					Eventually(processMap[ServiceBroker+"_"+strconv.Itoa(GinkgoParallelNode())].Wait(), 5*time.Second).Should(Receive())
 
 					close(ch)
 					Eventually(done).Should(BeClosed())

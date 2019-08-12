@@ -25,10 +25,10 @@ var _ = Describe("Integration_Scheduler_ScalingEngine", func() {
 		startFakeCCNOAAUAA(initInstanceCount)
 
 		scalingEngineConfPath = components.PrepareScalingEngineConfig(dbUrl, components.Ports[ScalingEngine], fakeCCNOAAUAA.URL(), defaultHttpClientTimeout, tmpDir)
-		startScalingEngine()
+		startScalingEngine(GinkgoParallelNode())
 
 		schedulerConfPath = components.PrepareSchedulerConfig(dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), tmpDir, defaultHttpClientTimeout)
-		startScheduler()
+		startScheduler(GinkgoParallelNode())
 
 		policyStr = setPolicySpecificDateTime(readPolicyFromFile("fakePolicyWithSpecificDateSchedule.json"), 70*time.Second, 2*time.Hour)
 
@@ -36,8 +36,8 @@ var _ = Describe("Integration_Scheduler_ScalingEngine", func() {
 
 	AfterEach(func() {
 		deletePolicy(testAppId)
-		stopScheduler()
-		stopScalingEngine()
+		stopScheduler(GinkgoParallelNode())
+		stopScalingEngine(GinkgoParallelNode())
 	})
 
 	Describe("Create Schedule", func() {
