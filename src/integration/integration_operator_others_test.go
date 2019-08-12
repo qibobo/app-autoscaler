@@ -27,27 +27,27 @@ var _ = Describe("Integration_Operator_Others", func() {
 		startFakeCCNOAAUAA(initInstanceCount)
 
 		apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, fakeCCNOAAUAA.URL(), dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), true, defaultHttpClientTimeout, tmpDir)
-		startApiServer(GinkgoParallelNode())
+		startApiServer()
 
 		scalingEngineConfPath = components.PrepareScalingEngineConfig(dbUrl, components.Ports[ScalingEngine], fakeCCNOAAUAA.URL(), defaultHttpClientTimeout, tmpDir)
-		startScalingEngine(GinkgoParallelNode())
+		startScalingEngine()
 
 		schedulerConfPath = components.PrepareSchedulerConfig(dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), tmpDir, defaultHttpClientTimeout)
-		startScheduler(GinkgoParallelNode())
+		startScheduler()
 
 	})
 
 	JustBeforeEach(func() {
 		operatorConfPath = components.PrepareOperatorConfig(dbUrl, fakeCCNOAAUAA.URL(), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), 10*time.Second, 1*24*time.Hour, defaultHttpClientTimeout, tmpDir)
-		startOperator(GinkgoParallelNode())
+		startOperator()
 	})
 
 	AfterEach(func() {
 		detachPolicy(testAppId, components.Ports[APIServer], httpClient)
-		stopScheduler(GinkgoParallelNode())
-		stopScalingEngine(GinkgoParallelNode())
-		stopOperator(GinkgoParallelNode())
-		stopApiServer(GinkgoParallelNode())
+		stopScheduler()
+		stopScalingEngine()
+		stopOperator()
+		stopApiServer()
 	})
 
 	Describe("Synchronizer", func() {
@@ -56,7 +56,7 @@ var _ = Describe("Integration_Operator_Others", func() {
 
 			Context("ScalingEngine Server is down when active_schedule changes", func() {
 				JustBeforeEach(func() {
-					stopScalingEngine(GinkgoParallelNode())
+					stopScalingEngine()
 				})
 
 				Context("Create an active schedule", func() {
@@ -75,7 +75,7 @@ var _ = Describe("Integration_Operator_Others", func() {
 						}, 70*time.Second, 1*time.Second).Should(HaveOccurred())
 
 						By("The active schedule is added into scaling engine")
-						startScalingEngine(GinkgoParallelNode())
+						startScalingEngine()
 						Eventually(func() bool {
 							return activeScheduleExists(testAppId)
 						}, 2*time.Minute, 5*time.Second).Should(BeTrue())
@@ -104,7 +104,7 @@ var _ = Describe("Integration_Operator_Others", func() {
 						}, 80*time.Second, 10*time.Second).Should(HaveOccurred())
 
 						By("The active schedule is removed from scaling engine")
-						startScalingEngine(GinkgoParallelNode())
+						startScalingEngine()
 						Eventually(func() bool {
 							return !activeScheduleExists(testAppId)
 						}, 2*time.Minute, 5*time.Second).Should(BeTrue())

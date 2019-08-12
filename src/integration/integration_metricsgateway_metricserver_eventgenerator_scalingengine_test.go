@@ -33,19 +33,19 @@ var _ = Describe("Integration_Metricsgateway_Metricserver_Eventgenerator_Scaling
 		eventGeneratorConfPath = components.PrepareEventGeneratorConfig(dbUrl, components.Ports[EventGenerator], fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsServerHTTP]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), aggregatorExecuteInterval, policyPollerInterval, saveInterval, evaluationManagerInterval, defaultHttpClientTimeout, tmpDir)
 		scalingEngineConfPath = components.PrepareScalingEngineConfig(dbUrl, components.Ports[ScalingEngine], fakeCCNOAAUAA.URL(), defaultHttpClientTimeout, tmpDir)
 
-		startMetricsServer(GinkgoParallelNode())
-		startMetricsGateway(GinkgoParallelNode())
-		startEventGenerator(GinkgoParallelNode())
-		startScalingEngine(GinkgoParallelNode())
+		startMetricsServer()
+		startMetricsGateway()
+		startEventGenerator()
+		startScalingEngine()
 
 	})
 
 	AfterEach(func() {
 		stopFakeRLPServer(fakeRLPServer)
-		stopMetricsGateway(GinkgoParallelNode())
-		stopMetricsServer(GinkgoParallelNode())
-		stopEventGenerator(GinkgoParallelNode())
-		stopScalingEngine(GinkgoParallelNode())
+		stopMetricsGateway()
+		stopMetricsServer()
+		stopEventGenerator()
+		stopScalingEngine()
 	})
 	Context("MemoryUtil", func() {
 		BeforeEach(func() {

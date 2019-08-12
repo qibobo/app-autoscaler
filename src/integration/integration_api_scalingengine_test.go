@@ -34,18 +34,18 @@ var _ = Describe("Integration_Api_ScalingEngine", func() {
 		initializeHttpClientForPublicApi("api_public.crt", "api_public.key", "autoscaler-ca.crt", apiMetricsCollectorHttpRequestTimeout)
 		startFakeCCNOAAUAA(initInstanceCount)
 		scalingEngineConfPath = components.PrepareScalingEngineConfig(dbUrl, components.Ports[ScalingEngine], fakeCCNOAAUAA.URL(), defaultHttpClientTimeout, tmpDir)
-		startScalingEngine(GinkgoParallelNode())
+		startScalingEngine()
 
 		apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, fakeCCNOAAUAA.URL(), dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), true, defaultHttpClientTimeout, tmpDir)
-		startApiServer(GinkgoParallelNode())
+		startApiServer()
 		appId = getRandomId()
 		pathVariables = []string{appId}
 
 	})
 
 	AfterEach(func() {
-		stopApiServer(GinkgoParallelNode())
-		stopScalingEngine(GinkgoParallelNode())
+		stopApiServer()
+		stopScalingEngine()
 	})
 	Describe("Get scaling histories", func() {
 
@@ -122,7 +122,7 @@ var _ = Describe("Integration_Api_ScalingEngine", func() {
 
 		Context("ScalingEngine is down", func() {
 			JustBeforeEach(func() {
-				stopScalingEngine(GinkgoParallelNode())
+				stopScalingEngine()
 				parameters = map[string]string{"start-time": "1111", "end-time": "9999", "order-direction": "desc", "page": "1", "results-per-page": "5"}
 			})
 

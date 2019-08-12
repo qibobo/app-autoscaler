@@ -30,14 +30,14 @@ var _ = Describe("Integration_Metricscollector_Eventgenerator_Scalingengine", fu
 			refreshInterval, saveInterval, collectMethod, defaultHttpClientTimeout, tmpDir)
 		eventGeneratorConfPath = components.PrepareEventGeneratorConfig(dbUrl, components.Ports[EventGenerator], fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), aggregatorExecuteInterval, policyPollerInterval, saveInterval, evaluationManagerInterval, defaultHttpClientTimeout, tmpDir)
 		scalingEngineConfPath = components.PrepareScalingEngineConfig(dbUrl, components.Ports[ScalingEngine], fakeCCNOAAUAA.URL(), defaultHttpClientTimeout, tmpDir)
-		startMetricsCollector(GinkgoParallelNode())
-		startEventGenerator(GinkgoParallelNode())
-		startScalingEngine(GinkgoParallelNode())
+		startMetricsCollector()
+		startEventGenerator()
+		startScalingEngine()
 
 	})
 
 	AfterEach(func() {
-		stopAllWithIndex(GinkgoParallelNode())
+		stopAll()
 	})
 
 	Describe("Scale out", func() {

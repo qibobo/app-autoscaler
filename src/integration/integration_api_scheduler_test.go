@@ -29,10 +29,10 @@ var _ = Describe("Integration_Api_Scheduler", func() {
 		initializeHttpClientForPublicApi("api_public.crt", "api_public.key", "autoscaler-ca.crt", apiMetricsCollectorHttpRequestTimeout)
 
 		schedulerConfPath = components.PrepareSchedulerConfig(dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), tmpDir, defaultHttpClientTimeout)
-		startScheduler(GinkgoParallelNode())
+		startScheduler()
 
 		serviceBrokerConfPath = components.PrepareServiceBrokerConfig(components.Ports[ServiceBroker], components.Ports[ServiceBrokerInternal], brokerUserName, brokerPassword, false, dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[APIServer]), brokerApiHttpRequestTimeout, tmpDir)
-		startServiceBroker(GinkgoParallelNode())
+		startServiceBroker()
 
 		serviceInstanceId = getRandomId()
 		orgId = getRandomId()
@@ -43,22 +43,22 @@ var _ = Describe("Integration_Api_Scheduler", func() {
 	})
 
 	AfterEach(func() {
-		stopServiceBroker(GinkgoParallelNode())
-		stopScheduler(GinkgoParallelNode())
+		stopServiceBroker()
+		stopScheduler()
 	})
 
 	Describe("When offered as a service", func() {
 
 		BeforeEach(func() {
 			apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, fakeCCNOAAUAA.URL(), dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), false, defaultHttpClientTimeout, tmpDir)
-			startApiServer(GinkgoParallelNode())
+			startApiServer()
 
 			resp, err := detachPolicy(appId, components.Ports[APIPublicServer], httpClientForPublicApi)
 			Expect(err).NotTo(HaveOccurred())
 			resp.Body.Close()
 		})
 		AfterEach(func() {
-			stopApiServer(GinkgoParallelNode())
+			stopApiServer()
 		})
 
 		Context("Cloud Controller api is not available", func() {
@@ -193,14 +193,14 @@ var _ = Describe("Integration_Api_Scheduler", func() {
 		Context("Scheduler is down", func() {
 
 			JustBeforeEach(func() {
-				stopScheduler(GinkgoParallelNode())
+				stopScheduler()
 			})
 			BeforeEach(func() {
 				provisionAndBind(serviceInstanceId, orgId, spaceId, bindingId, appId, nil, components.Ports[ServiceBroker], httpClientForPublicApi)
 			})
 			AfterEach(func() {
 				unbindAndDeprovision(bindingId, appId, serviceInstanceId, components.Ports[ServiceBroker], httpClientForPublicApi)
-				startScheduler(GinkgoParallelNode())
+				startScheduler()
 			})
 
 			Context("Create policy", func() {
@@ -431,14 +431,14 @@ var _ = Describe("Integration_Api_Scheduler", func() {
 	Describe("When offered as a built-in experience", func() {
 		BeforeEach(func() {
 			apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, fakeCCNOAAUAA.URL(), dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), false, defaultHttpClientTimeout, tmpDir)
-			startApiServer(GinkgoParallelNode())
+			startApiServer()
 
 			resp, err := detachPolicy(appId, components.Ports[APIServer], httpClient)
 			Expect(err).NotTo(HaveOccurred())
 			resp.Body.Close()
 		})
 		AfterEach(func() {
-			stopApiServer(GinkgoParallelNode())
+			stopApiServer()
 		})
 
 		Describe("Create policy", func() {

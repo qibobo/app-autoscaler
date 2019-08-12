@@ -211,123 +211,115 @@ func PreparePorts() Ports {
 	}
 }
 
-func startApiServer(index int) *ginkgomon.Runner {
+func startApiServer() *ginkgomon.Runner {
 	runner := components.ApiServer(apiServerConfPath)
-	processMap[APIServer+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+	processMap[APIServer] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{APIServer, runner},
 	}))
 	return runner
 }
 
-func startGolangApiServer(index int) {
-	processMap[GolangAPIServer+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startGolangApiServer() {
+	processMap[GolangAPIServer] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{GolangAPIServer, components.GolangAPIServer(golangApiServerConfPath)},
 	}))
 }
 
-func startServiceBroker(index int) *ginkgomon.Runner {
+func startServiceBroker() *ginkgomon.Runner {
 	runner := components.ServiceBroker(serviceBrokerConfPath)
-	processMap[ServiceBroker+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+	processMap[ServiceBroker] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{ServiceBroker, runner},
 	}))
 	return runner
 }
 
-func startScheduler(index int) {
-	processMap[Scheduler+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startScheduler() {
+	processMap[Scheduler] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{Scheduler, components.Scheduler(schedulerConfPath)},
 	}))
 }
 
-func startMetricsCollector(index int) {
-	processMap[MetricsCollector+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startMetricsCollector() {
+	processMap[MetricsCollector] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{MetricsCollector, components.MetricsCollector(metricsCollectorConfPath)},
 	}))
 }
 
-func startEventGenerator(index int) {
-	processMap[EventGenerator+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startEventGenerator() {
+	processMap[EventGenerator] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{EventGenerator, components.EventGenerator(eventGeneratorConfPath)},
 	}))
 }
 
-func startScalingEngine(index int) {
-	processMap[ScalingEngine+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startScalingEngine() {
+	processMap[ScalingEngine] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{ScalingEngine, components.ScalingEngine(scalingEngineConfPath)},
 	}))
 }
 
-func startOperator(index int) {
-	processMap[Operator+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startOperator() {
+	processMap[Operator] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{Operator, components.Operator(operatorConfPath)},
 	}))
 }
 
-func startMetricsGateway(index int) {
-	processMap[MetricsGateway+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startMetricsGateway() {
+	processMap[MetricsGateway] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{MetricsGateway, components.MetricsGateway(metricsGatewayConfPath)},
 	}))
 }
 
-func startMetricsServer(index int) {
-	processMap[MetricsServerHTTP+"_"+strconv.Itoa(index)] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
+func startMetricsServer() {
+	processMap[MetricsServerHTTP] = ginkgomon.Invoke(grouper.NewOrdered(os.Interrupt, grouper.Members{
 		{MetricsServerHTTP, components.MetricsServer(metricsServerConfPath)},
 	}))
 }
 
-func stopApiServer(index int) {
-	ginkgomon.Kill(processMap[APIServer+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopApiServer() {
+	ginkgomon.Kill(processMap[APIServer], 5*time.Second)
 }
-func stopGolangApiServer(index int) {
-	ginkgomon.Kill(processMap[GolangAPIServer+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopGolangApiServer() {
+	ginkgomon.Kill(processMap[GolangAPIServer], 5*time.Second)
 }
-func stopScheduler(index int) {
-	ginkgomon.Kill(processMap[Scheduler+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopScheduler() {
+	ginkgomon.Kill(processMap[Scheduler], 5*time.Second)
 }
-func stopScalingEngine(index int) {
-	ginkgomon.Kill(processMap[ScalingEngine+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopScalingEngine() {
+	ginkgomon.Kill(processMap[ScalingEngine], 5*time.Second)
 }
-func stopMetricsCollector(index int) {
-	ginkgomon.Kill(processMap[MetricsCollector+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopMetricsCollector() {
+	ginkgomon.Kill(processMap[MetricsCollector], 5*time.Second)
 }
-func stopEventGenerator(index int) {
-	ginkgomon.Kill(processMap[EventGenerator+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopEventGenerator() {
+	ginkgomon.Kill(processMap[EventGenerator], 5*time.Second)
 }
-func stopServiceBroker(index int) {
-	ginkgomon.Kill(processMap[ServiceBroker+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopServiceBroker() {
+	ginkgomon.Kill(processMap[ServiceBroker], 5*time.Second)
 }
-func stopOperator(index int) {
-	ginkgomon.Kill(processMap[Operator+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopOperator() {
+	ginkgomon.Kill(processMap[Operator], 5*time.Second)
 }
-func stopMetricsGateway(index int) {
-	ginkgomon.Kill(processMap[MetricsGateway+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopMetricsGateway() {
+	ginkgomon.Kill(processMap[MetricsGateway], 5*time.Second)
 }
-func stopMetricsServer(index int) {
-	ginkgomon.Kill(processMap[MetricsServerHTTP+"_"+strconv.Itoa(index)], 5*time.Second)
+func stopMetricsServer() {
+	ginkgomon.Kill(processMap[MetricsServerHTTP], 5*time.Second)
 }
 
-func sendSigusr2Signal(component string, index int) {
-	process := processMap[component+"_"+strconv.Itoa(index)]
+func sendSigusr2Signal(component string) {
+	process := processMap[component]
 	if process != nil {
 		process.Signal(syscall.SIGUSR2)
 	}
 }
 
-func sendKillSignal(component string, index int) {
-	ginkgomon.Kill(processMap[component+"_"+strconv.Itoa(index)], 5*time.Second)
+func sendKillSignal(component string) {
+	ginkgomon.Kill(processMap[component], 5*time.Second)
 }
 
 func stopAll() {
 	for _, process := range processMap {
 		if process == nil {
-			continue
-		}
-		ginkgomon.Interrupt(process, 15*time.Second)
-	}
-}
-func stopAllWithIndex(index int) {
-	for name, process := range processMap {
-		if strings.HasSuffix(name, "_"+strconv.Itoa(index)) && process == nil {
 			continue
 		}
 		ginkgomon.Interrupt(process, 15*time.Second)

@@ -30,18 +30,18 @@ var _ = Describe("Integration_Api_MetricsCollector", func() {
 		initializeHttpClientForPublicApi("api_public.crt", "api_public.key", "autoscaler-ca.crt", apiMetricsCollectorHttpRequestTimeout)
 		metricsCollectorConfPath = components.PrepareMetricsCollectorConfig(dbUrl, components.Ports[MetricsCollector], fakeCCNOAAUAA.URL(), collectInterval,
 			refreshInterval, saveInterval, collectMethod, defaultHttpClientTimeout, tmpDir)
-		startMetricsCollector(GinkgoParallelNode())
+		startMetricsCollector()
 
 		apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, fakeCCNOAAUAA.URL(), dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), true, defaultHttpClientTimeout, tmpDir)
-		startApiServer(GinkgoParallelNode())
+		startApiServer()
 		appId = getRandomId()
 		pathVariables = []string{appId, metricType}
 
 	})
 
 	AfterEach(func() {
-		stopApiServer(GinkgoParallelNode())
-		stopMetricsCollector(GinkgoParallelNode())
+		stopApiServer()
+		stopMetricsCollector()
 	})
 	Describe("Get metrics", func() {
 
@@ -117,7 +117,7 @@ var _ = Describe("Integration_Api_MetricsCollector", func() {
 
 		Context("MetricsCollector is down", func() {
 			JustBeforeEach(func() {
-				stopMetricsCollector(GinkgoParallelNode())
+				stopMetricsCollector()
 				parameters = map[string]string{"start-time": "1111", "end-time": "9999", "order-direction": "asc", "page": "1", "results-per-page": "5"}
 			})
 

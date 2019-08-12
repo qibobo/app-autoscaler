@@ -29,7 +29,7 @@ var _ = Describe("Integration_GolangApi_Scheduler", func() {
 		initializeHttpClientForPublicApi("api_public.crt", "api_public.key", "autoscaler-ca.crt", apiMetricsCollectorHttpRequestTimeout)
 
 		schedulerConfPath = components.PrepareSchedulerConfig(dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), tmpDir, defaultHttpClientTimeout)
-		startScheduler(GinkgoParallelNode())
+		startScheduler()
 
 		serviceInstanceId = getRandomId()
 		orgId = getRandomId()
@@ -40,7 +40,7 @@ var _ = Describe("Integration_GolangApi_Scheduler", func() {
 	})
 
 	AfterEach(func() {
-		stopScheduler(GinkgoParallelNode())
+		stopScheduler()
 	})
 
 	Describe("When offered as a service", func() {
@@ -50,14 +50,14 @@ var _ = Describe("Integration_GolangApi_Scheduler", func() {
 				fakeCCNOAAUAA.URL(), false, 200, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]),
 				fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), "https://127.0.0.1:8888",
 				false, defaultHttpClientTimeout, tmpDir)
-			startGolangApiServer(GinkgoParallelNode())
+			startGolangApiServer()
 
 			resp, err := detachPolicy(appId, components.Ports[GolangAPIServer], httpClientForPublicApi)
 			Expect(err).NotTo(HaveOccurred())
 			resp.Body.Close()
 		})
 		AfterEach(func() {
-			stopGolangApiServer(GinkgoParallelNode())
+			stopGolangApiServer()
 		})
 
 		Context("Cloud Controller api is not available", func() {
@@ -192,7 +192,7 @@ var _ = Describe("Integration_GolangApi_Scheduler", func() {
 		Context("Scheduler is down", func() {
 
 			JustBeforeEach(func() {
-				stopScheduler(GinkgoParallelNode())
+				stopScheduler()
 			})
 			BeforeEach(func() {
 				provisionAndBind(serviceInstanceId, orgId, spaceId, bindingId, appId, nil, components.Ports[GolangServiceBroker], httpClientForPublicApi)
@@ -435,14 +435,14 @@ var _ = Describe("Integration_GolangApi_Scheduler", func() {
 				fakeCCNOAAUAA.URL(), false, 200, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]),
 				fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), "https://127.0.0.1:8888",
 				true, defaultHttpClientTimeout, tmpDir)
-			startGolangApiServer(GinkgoParallelNode())
+			startGolangApiServer()
 
 			resp, err := detachPolicy(appId, components.Ports[GolangAPIServer], httpClientForPublicApi)
 			Expect(err).NotTo(HaveOccurred())
 			resp.Body.Close()
 		})
 		AfterEach(func() {
-			stopGolangApiServer(GinkgoParallelNode())
+			stopGolangApiServer()
 		})
 
 		Describe("Create policy", func() {

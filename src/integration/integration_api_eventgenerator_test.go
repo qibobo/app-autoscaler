@@ -36,17 +36,17 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 		initializeHttpClientForPublicApi("api_public.crt", "api_public.key", "autoscaler-ca.crt", apiEventGeneratorHttpRequestTimeout)
 
 		eventGeneratorConfPath = components.PrepareEventGeneratorConfig(dbUrl, components.Ports[EventGenerator], fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), aggregatorExecuteInterval, policyPollerInterval, saveInterval, evaluationManagerInterval, defaultHttpClientTimeout, tmpDir)
-		startEventGenerator(GinkgoParallelNode())
+		startEventGenerator()
 		apiServerConfPath = components.PrepareApiServerConfig(components.Ports[APIServer], components.Ports[APIPublicServer], false, 200, fakeCCNOAAUAA.URL(), dbUrl, fmt.Sprintf("https://127.0.0.1:%d", components.Ports[Scheduler]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ScalingEngine]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[MetricsCollector]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[EventGenerator]), fmt.Sprintf("https://127.0.0.1:%d", components.Ports[ServiceBrokerInternal]), true, defaultHttpClientTimeout, tmpDir)
-		startApiServer(GinkgoParallelNode())
+		startApiServer()
 		appId = getRandomId()
 		pathVariables = []string{appId, metricType}
 
 	})
 
 	AfterEach(func() {
-		stopApiServer(GinkgoParallelNode())
-		stopEventGenerator(GinkgoParallelNode())
+		stopApiServer()
+		stopEventGenerator()
 	})
 	Describe("Get App Metrics", func() {
 
@@ -116,7 +116,7 @@ var _ = Describe("Integration_Api_EventGenerator", func() {
 
 		Context("EventGenerator is down", func() {
 			JustBeforeEach(func() {
-				stopEventGenerator(GinkgoParallelNode())
+				stopEventGenerator()
 			})
 
 			It("should error with status code 500", func() {
