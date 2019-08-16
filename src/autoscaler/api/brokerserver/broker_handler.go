@@ -56,9 +56,17 @@ func (h *BrokerHandler) CreateServiceInstance(w http.ResponseWriter, r *http.Req
 	instanceId := vars["instanceId"]
 
 	body := &models.InstanceCreationRequestBody{}
-	err := json.NewDecoder(r.Body).Decode(&body)
+	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		h.logger.Error("failed to create service instance when trying to read request body", err)
+		h.logger.Error("failed to read service provision request body", err, lager.Data{"instanceId": instanceId})
+		handlers.WriteJSONResponse(w, http.StatusInternalServerError, models.ErrorResponse{
+			Code:    "Interal-Server-Error",
+			Message: "Failed to read request body"})
+		return
+	}
+	err = json.Unmarshal(bodyBytes, body)
+	if err != nil {
+		h.logger.Error("failed to unmarshal service provision body", err, lager.Data{"instanceId": instanceId, "body": string(bodyBytes)})
 		handlers.WriteJSONResponse(w, http.StatusBadRequest, models.ErrorResponse{
 			Code:    "Bad Request",
 			Message: "Invalid request body format"})
@@ -101,9 +109,17 @@ func (h *BrokerHandler) DeleteServiceInstance(w http.ResponseWriter, r *http.Req
 	instanceId := vars["instanceId"]
 
 	body := &models.BrokerCommonRequestBody{}
-	err := json.NewDecoder(r.Body).Decode(&body)
+	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		h.logger.Error("failed to delete service instance when trying to read request body", err)
+		h.logger.Error("failed to read service deprovision request body", err, lager.Data{"instanceId": instanceId})
+		handlers.WriteJSONResponse(w, http.StatusInternalServerError, models.ErrorResponse{
+			Code:    "Interal-Server-Error",
+			Message: "Failed to read request body"})
+		return
+	}
+	err = json.Unmarshal(bodyBytes, body)
+	if err != nil {
+		h.logger.Error("failed to unmarshal service deprovision body", err, lager.Data{"instanceId": instanceId, "body": string(bodyBytes)})
 		handlers.WriteJSONResponse(w, http.StatusBadRequest, models.ErrorResponse{
 			Code:    "Bad Request",
 			Message: "Invalid request body format"})
@@ -146,9 +162,17 @@ func (h *BrokerHandler) BindServiceInstance(w http.ResponseWriter, r *http.Reque
 	bindingId := vars["bindingId"]
 	var policyGuid *uuid.UUID
 	body := &models.BindingRequestBody{}
-	err := json.NewDecoder(r.Body).Decode(&body)
+	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		h.logger.Error("failed to create binding when trying to read request body", err)
+		h.logger.Error("failed to read bind request body", err, lager.Data{"instanceId": instanceId, "bindingId": bindingId})
+		handlers.WriteJSONResponse(w, http.StatusInternalServerError, models.ErrorResponse{
+			Code:    "Interal-Server-Error",
+			Message: "Failed to read request body"})
+		return
+	}
+	err = json.Unmarshal(bodyBytes, body)
+	if err != nil {
+		h.logger.Error("failed to unmarshal bind body", err, lager.Data{"instanceId": instanceId, "bindingId": bindingId, "body": string(bodyBytes)})
 		handlers.WriteJSONResponse(w, http.StatusBadRequest, models.ErrorResponse{
 			Code:    "Bad Request",
 			Message: "Invalid request body format"})
@@ -239,7 +263,7 @@ func (h *BrokerHandler) BindServiceInstance(w http.ResponseWriter, r *http.Reque
 	}
 	handlers.WriteJSONResponse(w, http.StatusCreated, models.CredentialResponse{
 		Credentials: models.Credentials{
-			CustomMetrics: models.CustomMetrics{
+			CustomMetrics: models.CustomMetricsCredentials{
 				Credential: cred,
 				URL:        h.conf.MetricsForwarder.MetricsForwarderUrl,
 			},
@@ -252,9 +276,17 @@ func (h *BrokerHandler) UnbindServiceInstance(w http.ResponseWriter, r *http.Req
 	bindingId := vars["bindingId"]
 
 	body := &models.UnbindingRequestBody{}
-	err := json.NewDecoder(r.Body).Decode(&body)
+	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		h.logger.Error("failed to read request body:delete binding", err)
+		h.logger.Error("failed to read unbind request body", err, lager.Data{"instanceId": instanceId, "bindingId": bindingId})
+		handlers.WriteJSONResponse(w, http.StatusInternalServerError, models.ErrorResponse{
+			Code:    "Interal-Server-Error",
+			Message: "Failed to read request body"})
+		return
+	}
+	err = json.Unmarshal(bodyBytes, body)
+	if err != nil {
+		h.logger.Error("failed to unmarshal unbind body", err, lager.Data{"instanceId": instanceId, "bindingId": bindingId, "body": string(bodyBytes)})
 		handlers.WriteJSONResponse(w, http.StatusBadRequest, models.ErrorResponse{
 			Code:    "Bad Request",
 			Message: "Invalid request body format"})
