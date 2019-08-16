@@ -114,6 +114,28 @@ var _ = Describe("BrokerHandler", func() {
 			})
 		})
 
+		Context("When database CreateServiceInstance call returns ErrConflict", func() {
+			BeforeEach(func() {
+				instanceCreationReqBody := &models.InstanceCreationRequestBody{
+					OrgGUID:   "an-org-guid",
+					SpaceGUID: "a-space-guid",
+					BrokerCommonRequestBody: models.BrokerCommonRequestBody{
+						ServiceID: "a-service-id",
+						PlanID:    "a-plan-id",
+					},
+				}
+				body, err := json.Marshal(instanceCreationReqBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req, err = http.NewRequest(http.MethodPut, "", bytes.NewReader(body))
+
+				bindingdb.CreateServiceInstanceReturns(db.ErrConflict)
+			})
+			It("fails with 409", func() {
+				Expect(resp.Code).To(Equal(http.StatusConflict))
+			})
+		})
+
 		Context("When database CreateServiceInstance call returns error other than ErrAlreadyExists", func() {
 			BeforeEach(func() {
 				instanceCreationReqBody := &models.InstanceCreationRequestBody{
@@ -154,6 +176,30 @@ var _ = Describe("BrokerHandler", func() {
 			})
 			It("succeeds with 201 and returns dashboard_url", func() {
 				Expect(resp.Code).To(Equal(http.StatusCreated))
+				Expect(resp.Body.Bytes()).To(Equal([]byte("{\"dashboard_url\":\"https://service-dashboard-url.com/manage/an-instance-id\"}")))
+			})
+		})
+
+		Context("When dashboard redirect uri is present in config and database CreateServiceInstance call returns ErrAlreadyExists", func() {
+			BeforeEach(func() {
+				instanceCreationReqBody := &models.InstanceCreationRequestBody{
+					OrgGUID:   "an-org-guid",
+					SpaceGUID: "a-space-guid",
+					BrokerCommonRequestBody: models.BrokerCommonRequestBody{
+						ServiceID: "a-service-id",
+						PlanID:    "a-plan-id",
+					},
+				}
+				body, err := json.Marshal(instanceCreationReqBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				req, err = http.NewRequest(http.MethodPut, "", bytes.NewReader(body))
+				conf.DashboardRedirectURI = "https://service-dashboard-url.com"
+
+				bindingdb.CreateServiceInstanceReturns(db.ErrAlreadyExists)
+			})
+			It("succeeds with 200 and returns dashboard_url", func() {
+				Expect(resp.Code).To(Equal(http.StatusOK))
 				Expect(resp.Body.Bytes()).To(Equal([]byte("{\"dashboard_url\":\"https://service-dashboard-url.com/manage/an-instance-id\"}")))
 			})
 		})
