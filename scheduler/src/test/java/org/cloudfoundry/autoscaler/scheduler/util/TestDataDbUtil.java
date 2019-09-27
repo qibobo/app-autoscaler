@@ -1,6 +1,7 @@
 package org.cloudfoundry.autoscaler.scheduler.util;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -23,11 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class TestDataDbUtil {
 
-	@Resource(name="dataSource")
+	@Resource(name = "dataSource")
 	private DataSource dataSource;
-	
-	@Resource(name="dataSource")
+
+	@Resource(name = "dataSource")
 	private DataSource policyDbDataSource;
+
+	private DatabaseType databaseType = null;
 
 	public void cleanupData() {
 		removeAllActiveSchedules();
@@ -43,16 +46,37 @@ public class TestDataDbUtil {
 		cleanScheduler(scheduler);
 	}
 
-	public Long getCurrentSequenceSchedulerId() {
+	public Long getCurrentSpecificDateSchedulerId()throws Exception {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-
-		return jdbcTemplate.queryForObject("SELECT last_value from schedule_id_sequence;", Long.class);
+//		String sqlPostgresql = "SELECT currval(pg_get_serial_sequence('app_scaling_specific_date_schedule', 'schedule_id'));";
+//		String sqlMysql = "SELECT MAX(schedule_id) FROM app_scaling_specific_date_schedule;";
+		String sql = "SELECT MAX(schedule_id) FROM app_scaling_specific_date_schedule;";;
+//		if(this.getDatabaseTypeFromDataSource()==DatabaseType.POSTGRESQL) {
+//			sql = sqlPostgresql;
+//		}
+//		else if(this.getDatabaseTypeFromDataSource()==DatabaseType.MYSQL) {
+//			sql = sqlMysql;
+//		}
+		return jdbcTemplate.queryForObject(sql, Long.class);
+	}
+	public Long getCurrentRecurringSchedulerId()throws Exception {
+		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+//		String sqlPostgresql = "SELECT currval(pg_get_serial_sequence('app_scaling_recurring_schedule', 'schedule_id'));";
+//		String sqlMysql = "SELECT MAX(schedule_id) FROM app_scaling_recurring_schedule;";
+		String sql = "SELECT MAX(schedule_id) FROM app_scaling_recurring_schedule;";;
+//		if(this.getDatabaseTypeFromDataSource()==DatabaseType.POSTGRESQL) {
+//			sql = sqlPostgresql;
+//		}
+//		else if(this.getDatabaseTypeFromDataSource()==DatabaseType.MYSQL) {
+//			sql = sqlMysql;
+//		}
+		return jdbcTemplate.queryForObject(sql, Long.class);
 	}
 
-	private Long numberingScheduleId() {
-		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-		return jdbcTemplate.queryForObject("SELECT nextval('schedule_id_sequence');", Long.class);
-	}
+//	private Long numberingScheduleId() {
+//		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+//		return jdbcTemplate.queryForObject("SELECT nextval('schedule_id_sequence');", Long.class);
+//	}
 
 	public int getNumberOfSpecificDateSchedules() {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
@@ -96,15 +120,15 @@ public class TestDataDbUtil {
 	public void insertSpecificDateSchedule(List<SpecificDateScheduleEntity> entities) {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 		for (SpecificDateScheduleEntity entity : entities) {
-			Long scheduleId = numberingScheduleId();
-			Object[] objects = new Object[] { scheduleId, entity.getAppId(), entity.getTimeZone(),
+//			Long scheduleId = numberingScheduleId();
+			Object[] objects = new Object[] { entity.getAppId(), entity.getTimeZone(),
 					Timestamp.valueOf(entity.getStartDateTime()), Timestamp.valueOf(entity.getEndDateTime()),
 					entity.getInstanceMinCount(), entity.getInstanceMaxCount(), entity.getDefaultInstanceMinCount(),
 					entity.getDefaultInstanceMaxCount(), entity.getInitialMinInstanceCount(), entity.getGuid() };
 
 			jdbcTemplate.update("INSERT INTO app_scaling_specific_date_schedule "
-					+ "(schedule_id, app_id, timezone, start_date_time, end_date_time, instance_min_count, instance_max_count, default_instance_min_count, default_instance_max_count, initial_min_instance_count, guid) "
-					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", objects);
+					+ "(app_id, timezone, start_date_time, end_date_time, instance_min_count, instance_max_count, default_instance_min_count, default_instance_max_count, initial_min_instance_count, guid) "
+					+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", objects);
 		}
 	}
 
@@ -112,9 +136,9 @@ public class TestDataDbUtil {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 
 		for (RecurringScheduleEntity entity : entities) {
-			Long scheduleId = numberingScheduleId();
+//			Long scheduleId = numberingScheduleId();
 
-			Object[] objects = new Object[] { scheduleId, entity.getAppId(), entity.getTimeZone(),
+			Object[] objects = new Object[] { entity.getAppId(), entity.getTimeZone(),
 					entity.getDefaultInstanceMinCount(), entity.getDefaultInstanceMaxCount(),
 					entity.getInstanceMinCount(), entity.getInstanceMaxCount(), entity.getInitialMinInstanceCount(),
 					entity.getStartDate(), entity.getEndDate(), Time.valueOf(entity.getStartTime()),
@@ -122,8 +146,8 @@ public class TestDataDbUtil {
 					convertArrayToBits(entity.getDaysOfMonth()), entity.getGuid() };
 
 			jdbcTemplate.update("INSERT INTO app_scaling_recurring_schedule "
-					+ "( schedule_id, app_id, timezone, default_instance_min_count, default_instance_max_count, instance_min_count, instance_max_count, initial_min_instance_count, start_date, end_date, start_time, end_time, days_of_week, days_of_month, guid) "
-					+ "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", objects);
+					+ "( app_id, timezone, default_instance_min_count, default_instance_max_count, instance_min_count, instance_max_count, initial_min_instance_count, start_date, end_date, start_time, end_time, days_of_week, days_of_month, guid) "
+					+ "VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", objects);
 		}
 	}
 
@@ -138,19 +162,29 @@ public class TestDataDbUtil {
 				+ "(id, app_id, start_job_identifier, instance_min_count, instance_max_count, initial_min_instance_count) "
 				+ "VALUES (?, ?, ?, ?, ?, ?)", objects);
 	}
+
 	@Transactional(value = "policyDbTransactionManager")
-	public void insertPolicyJson(String appId, String guid) throws IOException{
+	public void insertPolicyJson(String appId, String guid) throws Exception {
 		JdbcTemplate policyDbJdbcTemplate = new JdbcTemplate(policyDbDataSource);
 		Object[] objects = new Object[] { appId, PolicyUtil.getPolicyJsonContent(), guid };
-		policyDbJdbcTemplate.update("INSERT INTO policy_json(app_id, policy_json, guid) VALUES (?, to_json(?::json), ?)", objects);
-		
+		String sqlPostgresql = "INSERT INTO policy_json(app_id, policy_json, guid) VALUES (?, to_json(?::json), ?)";
+		String sqlMysql = "INSERT INTO policy_json(app_id, policy_json, guid) VALUES (?, ?, ?)";
+		String sql = null;
+		if (this.getDatabaseTypeFromDataSource() == DatabaseType.POSTGRESQL) {
+			sql = sqlPostgresql;
+		} else if (this.getDatabaseTypeFromDataSource() == DatabaseType.MYSQL) {
+			sql = sqlMysql;
+		}
+		policyDbJdbcTemplate.update(sql, objects);
+
 	}
+
 	@Transactional(value = "policyDbTransactionManager")
-	public void removeAllPolicyJson(){
+	public void removeAllPolicyJson() {
 		JdbcTemplate policyDbJdbcTemplate = new JdbcTemplate(policyDbDataSource);
 		policyDbJdbcTemplate.update("DELETE FROM policy_json");
 	}
-	
+
 	private void removeAllActiveSchedules() {
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 
@@ -188,6 +222,27 @@ public class TestDataDbUtil {
 
 		}
 		return bits;
+	}
+
+	public enum DatabaseType {
+		POSTGRESQL, MYSQL,
+	}
+
+	public DatabaseType getDatabaseTypeFromDataSource() throws Exception {
+		if (this.databaseType != null) {
+			return this.databaseType;
+		}
+		String driverName = this.dataSource.getConnection().getMetaData().getDriverName().toLowerCase();
+		if (driverName.indexOf("postgresql") > -1) {
+			this.databaseType = DatabaseType.POSTGRESQL;
+			return this.databaseType;
+		} else if (driverName.indexOf("mysql") > -1) {
+			this.databaseType = DatabaseType.MYSQL;
+			return this.databaseType;
+		} else {
+			throw new Exception("can not support the database driver:" + driverName);
+		}
+
 	}
 
 }

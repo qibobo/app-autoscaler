@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/lager"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 
 	"autoscaler/db"
@@ -17,7 +18,11 @@ type BindingSQLDB struct {
 }
 
 func NewBindingSQLDB(dbConfig db.DatabaseConfig, logger lager.Logger) (*BindingSQLDB, error) {
-	sqldb, err := sql.Open(db.PostgresDriverName, dbConfig.URL)
+	driverName, err := db.DetectDBDriver(dbConfig.URL)
+	if err != nil {
+		return nil, err
+	}
+	sqldb, err := sql.Open(driverName, dbConfig.URL)
 	if err != nil {
 		logger.Error("open-binding-db", err, lager.Data{"dbConfig": dbConfig})
 		return nil, err

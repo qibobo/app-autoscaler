@@ -81,7 +81,7 @@ var _ = Describe("BindingSqldb", func() {
 		JustBeforeEach(func() {
 			err = bdb.CreateServiceInstance(testInstanceId, testOrgGuid, testSpaceGuid)
 		})
-		Context("When instance is being created first time", func() {
+		FContext("When instance is being created first time", func() {
 			It("should succeed", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(hasServiceInstance(testInstanceId)).To(BeTrue())

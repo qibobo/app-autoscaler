@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 
 	"code.cloudfoundry.org/lager"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )
 
@@ -17,7 +18,11 @@ type PolicySQLDB struct {
 }
 
 func NewPolicySQLDB(dbConfig db.DatabaseConfig, logger lager.Logger) (*PolicySQLDB, error) {
-	sqldb, err := sql.Open(db.PostgresDriverName, dbConfig.URL)
+	driverName, err := db.DetectDBDriver(dbConfig.URL)
+	if err != nil {
+		return nil, err
+	}
+	sqldb, err := sql.Open(driverName, dbConfig.URL)
 	if err != nil {
 		logger.Error("open-policy-db", err, lager.Data{"dbConfig": dbConfig})
 		return nil, err

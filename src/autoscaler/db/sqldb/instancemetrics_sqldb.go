@@ -5,6 +5,7 @@ import (
 	"autoscaler/models"
 
 	"code.cloudfoundry.org/lager"
+	_ "github.com/go-sql-driver/mysql"
 	. "github.com/lib/pq"
 
 	"context"
@@ -19,7 +20,11 @@ type InstanceMetricsSQLDB struct {
 }
 
 func NewInstanceMetricsSQLDB(dbConfig db.DatabaseConfig, logger lager.Logger) (*InstanceMetricsSQLDB, error) {
-	sqldb, err := sql.Open(db.PostgresDriverName, dbConfig.URL)
+	driverName, err := db.DetectDBDriver(dbConfig.URL)
+	if err != nil {
+		return nil, err
+	}
+	sqldb, err := sql.Open(driverName, dbConfig.URL)
 	if err != nil {
 		logger.Error("failed-open-instancemetrics-db", err, lager.Data{"dbConfig": dbConfig})
 		return nil, err

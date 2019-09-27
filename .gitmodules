@@ -145,3 +145,6 @@
 [submodule "src/github.com/patrickmn/go-cache"]
 	path = src/github.com/patrickmn/go-cache
 	url = https://github.com/patrickmn/go-cache
+[submodule "src/github.com/go-sql-driver/mysql"]
+	path = src/github.com/go-sql-driver/mysql
+	url = https://github.com/go-sql-driver/mysql

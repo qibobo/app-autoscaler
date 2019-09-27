@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"code.cloudfoundry.org/lager"
+	_ "github.com/go-sql-driver/mysql"
 	. "github.com/lib/pq"
 
 	"database/sql"
@@ -19,9 +20,11 @@ type AppMetricSQLDB struct {
 }
 
 func NewAppMetricSQLDB(dbConfig db.DatabaseConfig, logger lager.Logger) (*AppMetricSQLDB, error) {
-	var err error
-
-	sqldb, err := sql.Open(db.PostgresDriverName, dbConfig.URL)
+	driverName, err := db.DetectDBDriver(dbConfig.URL)
+	if err != nil {
+		return nil, err
+	}
+	sqldb, err := sql.Open(driverName, dbConfig.URL)
 	if err != nil {
 		logger.Error("open-AppMetric-db", err, lager.Data{"dbConfig": dbConfig})
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"autoscaler/models"
 
 	"code.cloudfoundry.org/lager"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 
 	"database/sql"
@@ -18,7 +19,11 @@ type ScalingEngineSQLDB struct {
 }
 
 func NewScalingEngineSQLDB(dbConfig db.DatabaseConfig, logger lager.Logger) (*ScalingEngineSQLDB, error) {
-	sqldb, err := sql.Open(db.PostgresDriverName, dbConfig.URL)
+	driverName, err := db.DetectDBDriver(dbConfig.URL)
+	if err != nil {
+		return nil, err
+	}
+	sqldb, err := sql.Open(driverName, dbConfig.URL)
 	if err != nil {
 		logger.Error("open-scaling-engine-db", err, lager.Data{"dbConfig": dbConfig})
 		return nil, err

@@ -12,6 +12,7 @@ import (
 	"autoscaler/db"
 	"autoscaler/models"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,8 +32,11 @@ var _ = BeforeSuite(func() {
 	if dbUrl == "" {
 		Fail("environment variable $DBURL is not set")
 	}
-
-	dbHelper, e = sql.Open(db.PostgresDriverName, dbUrl)
+	driverName, err := db.DetectDBDriver(dbUrl)
+	if err != nil {
+		Fail(err.Error())
+	}
+	dbHelper, e = sql.Open(driverName, dbUrl)
 	if e != nil {
 		Fail("can not connect database: " + e.Error())
 	}
